@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -10,15 +11,13 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
-import { LoginDto } from './dto/login-user.dto';
-import { JwtService } from '@nestjs/jwt';
 import { JWTPayloadtype } from 'src/utils/types';
+import { userType } from 'src/utils/enums';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly user: Repository<User>,
-    private readonly jwtService: JwtService,
   ) {}
 
   async findAll() {
@@ -41,38 +40,20 @@ export class UserService {
     return await this.user.save(user);
   }
 
-  async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-    const user = await this.user.findOne({ where: { email } });
-    if (!user) {
-      throw new BadRequestException(`User with email ${email} not found`);
-    }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new BadRequestException(`Invalid password`);
-    }
-    const token = await this.generateToken({
-      id: user.id,
-      usertype: user.userType,
-    });
-    return { token };
-  }
-  private async generateToken(payload: JWTPayloadtype) {
-    const token = await this.jwtService.signAsync(payload);
-    return token;
-  }
-
   async findOne(email: string) {
     const user = await this.user.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException(`invalid email or password`);
     }
-    return user;  
+    return user;
   }
-  async update(id: number, UpdateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, currentUser: any) {
+    if (currentUser.userType !== userType.admin && currentUser.id !== id) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
     const user = await this.user.preload({
       id: id,
-      ...UpdateUserDto,
+      ...updateUserDto,
     });
 
     if (!user) {
@@ -80,11 +61,14 @@ export class UserService {
     }
     return this.user.save(user);
   }
-  // async remove(id: number) {
-  //   const user = await this.findOne(id);
-  //   if (!user) {
-  //     throw new NotFoundException(`User #${id} not found`);
-  //   }
-  //   return this.user.remove(user);
-  // }
+  async delete(id: number, currentUser: any) {
+    if (currentUser.userType !== userType.admin && currentUser.id !== id) {
+      throw new ForbiddenException('You can only delete your own profile');
+    }
+    const user = await this.user.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User #${id} not found`);
+    }
+    return this.user.remove(user);
+  }
 }

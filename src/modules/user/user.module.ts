@@ -15,6 +15,7 @@ const schema=[User];
       signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
     }),
   })],
+  
   controllers: [UserController],
   providers: [UserService],
   exports :[UserService]

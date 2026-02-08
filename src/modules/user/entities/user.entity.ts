@@ -22,7 +22,7 @@ export class User {
   email: string;
   @Column()
   password: string;
-  @Column({ type: 'enum', enum: userType, default: 'CUSTOMER' })
+  @Column({ type: 'enum', enum: userType, default: 'customer' })
   userType: userType;
   @Column({ default: false })
   isActive: boolean;
