@@ -51,14 +51,21 @@ export class UserService {
     if (currentUser.userType !== userType.admin && currentUser.id !== id) {
       throw new ForbiddenException('You can only update your own profile');
     }
-    const user = await this.user.preload({
-      id: id,
-      ...updateUserDto,
-    });
-
+  
+    const user = await this.user.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
     }
+  
+    // Only assign properties that are actually provided (not undefined)
+    const updates = Object.fromEntries(
+      Object.entries(updateUserDto).filter(([, v]) => v !== undefined),
+    );
+    if (Object.keys(updates).length === 0) {
+      return user; // nothing to update, avoid empty UPDATE
+    }
+  
+    Object.assign(user, updates);
     return this.user.save(user);
   }
   async delete(id: number, currentUser: any) {

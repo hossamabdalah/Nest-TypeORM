@@ -8,5 +8,6 @@ const schema = [Product];
   imports: [TypeOrmModule.forFeature(schema)],
   controllers: [ProductController],
   providers: [ProductService],
+  exports:[ProductModule]
 })
 export class ProductModule {}

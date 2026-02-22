@@ -8,7 +8,7 @@ export class Review {
   id: number;
 
   @Column()
-  content: string;
+  rating: number;
   @Column()
   comment: string;
 

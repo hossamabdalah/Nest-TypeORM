@@ -38,13 +38,13 @@ export class ProductService {
         : {}),
     };
     return this.productRepository.find({
-      where:Filters,
+      where: Filters,
       relations: ['user'],
     });
   }
 
-  findOne(id: number) {
-    const product = this.productRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
       throw new NotFoundException(`Product #${id} not found`);
     }
@@ -56,15 +56,7 @@ export class ProductService {
     updateProductDto: UpdateProductDto,
     currentUser: any,
   ) {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-
-    if (!product) {
-      throw new NotFoundException(`Product #${id} not found`);
-    }
-
+    const product = await this.getProductBy(id)
     if (product.user.id !== currentUser.id) {
       throw new ForbiddenException(
         'you are only alowed to update your own products!',
@@ -76,6 +68,15 @@ export class ProductService {
   }
 
   async remove(id: number, currentUser: any) {
+    const product = await this.getProductBy(id)
+    if (product.user.id !== currentUser.id) {
+      throw new ForbiddenException(
+        'you are only alowed to delete your own products!',
+      );
+    }
+    return this.productRepository.remove(product);
+  }
+  private async getProductBy(id: number) {
     const product = await this.productRepository.findOne({
       where: { id },
       relations: ['user'],
@@ -83,11 +84,6 @@ export class ProductService {
     if (!product) {
       throw new NotFoundException(`Product #${id} not found`);
     }
-    if (product.user.id !== currentUser.id) {
-      throw new ForbiddenException(
-        'you are only alowed to delete your own products!',
-      );
-    }
-    return this.productRepository.remove(product);
+    return product;
   }
 }

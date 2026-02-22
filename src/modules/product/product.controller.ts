@@ -25,7 +25,7 @@ export class ProductController {
 
   @Post()
   @Roles(userType.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   create(@Body() createProductDto: CreateProductDto, @Req() req: any) {
     return this.productService.create(createProductDto, req.user);
   }
