@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { Product } from '../product/entities/product.entity';
 import { userType } from 'src/utils/enums';
+import { QueryReviewDto } from './dto/query-review.dto';
 
 @Injectable()
 export class ReviewService {
@@ -44,11 +45,14 @@ export class ReviewService {
     return this.reviewRepository.save(review);
   }
 
-  async findAll() {
-    const reviews = await this.reviewRepository.find({
+  async findAll(query: QueryReviewDto) {
+    const { page, limit } = query;
+    const [data, total] = await this.reviewRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
       relations: ['user'],
     });
-    return reviews;
+    return { data, total, page, lastPage: Math.ceil(total / limit) };
   }
 
   async findOne(id: number) {
@@ -82,13 +86,12 @@ export class ReviewService {
     return review;
   }
 
-  async delete(id: number, userId: number,usertype:userType) {
+  async delete(id: number, userId: number, usertype: userType) {
     const review = await this.getReviewBy(id);
-    if (review.user.id === userId || usertype=== userType.admin ) {
+    if (review.user.id === userId || usertype === userType.admin) {
       await this.reviewRepository.remove(review);
       return { message: `this ${id} has been deleted` };
     }
     throw new UnauthorizedException('you are not allowed!');
   }
-
 }

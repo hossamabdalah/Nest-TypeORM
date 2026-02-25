@@ -10,6 +10,7 @@ import {
   UseGuards,
   Req,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -18,6 +19,7 @@ import { userType } from 'src/utils/enums';
 import { Roles } from '../user/decorators/user-role.decorators';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { QueryProductDto } from './dto/query-product.dto';
 
 @Controller('product')
 export class ProductController {
@@ -31,12 +33,8 @@ export class ProductController {
   }
 
   @Get()
-  findAll(
-    @Query('name') name: string,
-    @Query('minPrice') minPrice: string,
-    @Query('maxPrice') maxPrice: string,
-  ) {
-    return this.productService.findAll(name,minPrice,maxPrice);
+  findAll(@Query() query: QueryProductDto) {
+    return this.productService.findAll(query);
   }
 
   @Get(':id')

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -17,6 +18,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { userType } from 'src/utils/enums';
 import { RolesGuard } from '../auth/guard/roles.guard';
 import { Roles } from '../user/decorators/user-role.decorators';
+import { QueryReviewDto } from './dto/query-review.dto';
 
 @Controller('review')
 export class ReviewController {
@@ -35,8 +37,8 @@ export class ReviewController {
   }
 
   @Get()
-  findAll() {
-    return this.reviewService.findAll();
+  findAll(@Query()query:QueryReviewDto) {
+    return this.reviewService.findAll(query);
   }
 
   @Get(':id')
@@ -52,7 +54,6 @@ export class ReviewController {
     @Req() req: any,
   ) {
     const userId = req.user.id;
-    console.log(userId);
 
     return this.reviewService.update(id, updateReviewDto, userId);
   }
@@ -60,7 +61,7 @@ export class ReviewController {
   @UseGuards(AuthGuard('jwt'))
   remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     const userId = req.user.id;
-    const userType=req.user.userType
-    return this.reviewService.delete(id, userId,userType);
+    const userType = req.user.userType;
+    return this.reviewService.delete(id, userId, userType);
   }
 }
